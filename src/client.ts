@@ -1,4 +1,4 @@
-import { Client, Collection } from 'discord.js';
+import { Client, Collection, Invite } from 'discord.js';
 import glob from 'glob';
 import { promisify } from 'util';
 import { Command } from './interfaces/Command';
@@ -10,6 +10,7 @@ const globPromise = promisify(glob);
 class Bot extends Client {
   public commands: Collection<string, Command> = new Collection();
   public events: Collection<string, Event> = new Collection();
+  public invites: Collection<string, Invite> = new Collection();
   public config: Config | undefined;
 
   public constructor() {

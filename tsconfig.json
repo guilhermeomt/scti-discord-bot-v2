@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ES2017",                          
+    "target": "ES6",                          
     "module": "CommonJS",                    
     "lib": ["es6"],                     
     "allowJs": true,
     "outDir": "build",                          
     "rootDir": "src",
-    "strict": true,         
+    "strict": true,
+    "strictNullChecks": false,         
     "noImplicitAny": true,
     "esModuleInterop": true
   },
