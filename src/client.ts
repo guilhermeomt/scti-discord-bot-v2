@@ -4,6 +4,7 @@ import { promisify } from 'util';
 import { Command } from './interfaces/Command';
 import { Config } from './interfaces/Config';
 import { Event } from './interfaces/Event';
+import { Talk } from './models/Talk';
 
 const globPromise = promisify(glob);
 
@@ -12,6 +13,7 @@ class Bot extends Client {
   public events: Collection<string, Event> = new Collection();
   public invites: Collection<string, Invite> = new Collection();
   public config: Config | undefined;
+  public talks: Talk[] = [];
 
   public constructor() {
     super();

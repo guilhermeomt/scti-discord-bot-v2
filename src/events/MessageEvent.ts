@@ -6,10 +6,14 @@ export const run: RunFunction = async (client, message: Message) => {
   if (message.author.bot || !message.guild) return;
   const prefix = process.env.CMD_PREFIX;
 
-  const args: string[] = message.content
+  const args = message.content
     .slice(prefix?.length)
     .trim()
-    .split(/ +/g);
+    .match(/".*"|([^ ]+)/g);
+
+  args.forEach((arg, index) => {
+    args[index] = arg.replace(/"/g, '');
+  });
   const cmd: string | undefined = args.shift();
   const command: Command | undefined = client.commands.get(cmd as string);
   if (!command) return;
