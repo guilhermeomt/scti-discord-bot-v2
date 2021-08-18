@@ -34,14 +34,23 @@ export class NotionService {
     });
   }
 
-  createPage(parentId: string, data: object): Promise<any> {
+  getBlock(elementId: string): Promise<any> {
+    return this.client.blocks.children.list({
+      block_id: elementId,
+    });
+  }
+
+  createPage(parentId: string, data: object, content?: object): Promise<any> {
     return this.client.pages.create({
       parent: {
         database_id: parentId,
       },
       properties: {
         ...data,
-      }
+      },
+      children: [
+        ...content as any
+      ]
     })
   }
 

@@ -6,6 +6,7 @@ type Participant = {
   name: string;
   nickname: string;
   email: string;
+  githubURL: string;
 }
 
 export class Notion {
@@ -15,43 +16,69 @@ export class Notion {
   }
 
   private getParticipantTemplate(data: Participant) {
+    let children: any = [];
+    if (data.githubURL) {
+      children = [
+        {
+          object: 'block',
+          type: 'heading_2',
+          heading_2: {
+            text: [
+              {
+                type: 'text',
+                text: {
+                  content: 'Clique aqui para acessar meu GitHub!',
+                  link: {
+                    url: data.githubURL,
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ]
+    }
+
     return {
-      Nome: {
-        title: [
-          {
-            text: {
-              content: data.name,
+      properties: {
+        Nome: {
+          title: [
+            {
+              text: {
+                content: data.name,
+              },
             },
-          },
-        ],
-      },
-      Email: {
-        rich_text: [
-          {
-            text: {
-              content: data.email,
+          ],
+        },
+        Email: {
+          rich_text: [
+            {
+              text: {
+                content: data.email,
+              },
             },
-          },
-        ],
-      },
-      Id: {
-        rich_text: [
-          {
-            text: {
-              content: data.id,
+          ],
+        },
+        Id: {
+          rich_text: [
+            {
+              text: {
+                content: data.id,
+              },
             },
-          },
-        ],
-      },
-      'Nickname do Discord': {
-        rich_text: [
-          {
-            text: {
-              content: data.nickname,
+          ],
+        },
+        'Nickname do Discord': {
+          rich_text: [
+            {
+              text: {
+                content: data.nickname,
+              },
             },
-          },
-        ],
+          ],
+        },
       },
+      children,
     }
   }
 
@@ -89,11 +116,10 @@ export class Notion {
 
     const participant = this.getParticipantTemplate(participantData);
 
-    const response: PagesCreateResponse = await notionService.createPage(process.env.NOTION_DATABASE_ID, participant);
-    return response;
+    return await notionService.createPage(process.env.NOTION_DATABASE_ID, participant.properties, participant.children);
   }
 
-  async findParticipant(participantId: string) {
+  private async findParticipant(participantId: string) {
     const response = await notionService.queryDatabase(process.env.NOTION_PARTICIPANT_DATABASE_ID);
 
     const participant = response.results.filter((p: any) => p.properties.Id.rich_text[0].plain_text === participantId);
