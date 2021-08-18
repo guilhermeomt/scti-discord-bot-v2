@@ -3,7 +3,7 @@ import { Command } from '../interfaces/Command';
 import { RunFunction } from '../interfaces/RunFunction';
 
 export const run: RunFunction = async (client, message: Message) => {
-  if (message.author.bot || !message.guild) return;
+  if (message.author.bot) return;
   const prefix = process.env.CMD_PREFIX;
 
   const args = message.content
@@ -16,6 +16,7 @@ export const run: RunFunction = async (client, message: Message) => {
   });
   const cmd: string | undefined = args.shift();
   const command: Command | undefined = client.commands.get(cmd as string);
+
   if (!command) return;
 
   command
