@@ -40,7 +40,7 @@ export class NotionService {
     });
   }
 
-  createPage(parentId: string, data: object, content?: object): Promise<any> {
+  createPage(parentId: string, data: object): Promise<any> {
     return this.client.pages.create({
       parent: {
         database_id: parentId,
@@ -48,9 +48,6 @@ export class NotionService {
       properties: {
         ...data,
       },
-      children: [
-        ...content as any
-      ]
     })
   }
 

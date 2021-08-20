@@ -6,7 +6,6 @@ type Participant = {
   name: string;
   nickname: string;
   email: string;
-  githubURL: string;
 }
 
 export class Notion {
@@ -16,29 +15,6 @@ export class Notion {
   }
 
   private getParticipantTemplate(data: Participant) {
-    let children: any = [];
-    if (data.githubURL) {
-      children = [
-        {
-          object: 'block',
-          type: 'heading_2',
-          heading_2: {
-            text: [
-              {
-                type: 'text',
-                text: {
-                  content: 'Clique aqui para acessar meu GitHub!',
-                  link: {
-                    url: data.githubURL,
-                  },
-                },
-              },
-            ],
-          },
-        },
-      ]
-    }
-
     return {
       properties: {
         Nome: {
@@ -78,7 +54,6 @@ export class Notion {
           ],
         },
       },
-      children,
     }
   }
 
@@ -116,7 +91,7 @@ export class Notion {
 
     const participant = this.getParticipantTemplate(participantData);
 
-    return await notionService.createPage(process.env.NOTION_DATABASE_ID, participant.properties, participant.children);
+    return await notionService.createPage(process.env.NOTION_DATABASE_ID, participant.properties);
   }
 
   private async findParticipant(participantId: string) {

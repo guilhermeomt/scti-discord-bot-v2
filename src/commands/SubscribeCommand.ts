@@ -3,39 +3,55 @@ import validator from 'validator';
 import { RunFunction } from '../interfaces/RunFunction';
 import { notion } from '../models/Notion';
 
-export const run: RunFunction = async (client, message: Message, args: string[]) => {
-  if (message.channel.type === 'dm') {
+async function getParticipantData(message: Message) {
+  const user = message.author;
 
-    const user = message.author;
+  try {
+    const dmChannel = await user.createDM();
 
-    // TODO: Do a more friendly way to gather user input 
-    const name = args.shift();
-    const email = args.shift();
-    const githubURL = args.shift();
+    const welcomeMessage = `Olá! Bem-vindo a SCTI 2021! Vamos realizar o seu cadastro?\nPor favor, me informe seu nome completo. Atenção: o nome que você digitar será utilizado para a emissão do certificado. Você poderá alterar depois ao entrar em contato com algum administrador.`
+    await dmChannel.send(welcomeMessage);
+
+    let answer = await dmChannel.awaitMessages(msg => msg.author.id === user.id, { max: 1, time: 30000 });
+
+    const name = answer.first().content;
+
+    await dmChannel.send(`Agora digite seu email, por favor.`);
+
+    answer = await dmChannel.awaitMessages(msg => msg.author.id === user.id, { max: 1, time: 30000 });
+
+    const email = answer.first().content;
 
     if (!email || !validator.isEmail(email)) {
-      await message.channel.send(`Por favor, informe o seu email corretamente.`);
+      await message.channel.send(`Por favor, informe o seu email corretamente. Tente realizar novamente o cadastro com o comando \`${process.env.CMD_PREFIX}registrar\``);
       return;
     }
 
-    const participant = {
+    return {
       id: user.id,
       name,
       nickname: user.tag,
       email,
-      githubURL,
     }
+  } catch (err) {
+    await user.send(`Opa, algo deu errado! Por favor, tente novamente.`);
+  }
+}
 
+export const run: RunFunction = async (client, message: Message, args: string[]) => {
+  if (message.channel.type === 'dm') {
     try {
-      const page: any = await notion.subscribe(participant);
+      const participant = await getParticipantData(message);
 
-      await message.channel.send(`Obrigado por se inscrever! O seu perfil está disponível em ${page.url}`);
+      if (!participant) return;
+
+      await notion.subscribe(participant);
+
+      await message.channel.send(`Obrigado por se inscrever!`);
     } catch (error) {
-      await message.channel.send(`Desculpa! Ocorreu um erro... tente novamente mais tarde.`);
-      return;
+      await message.channel.send(`Desculpa! Ocorreu um erro... Tente novamente mais tarde ou entre em contato com algum administrador.`);
     }
   }
-
 };
 
 export const name: string = 'registrar';
