@@ -1,4 +1,3 @@
-import { PagesCreateResponse } from "@notionhq/client/build/src/api-endpoints";
 import { notionService } from "../services/NotionService";
 
 type Participant = {
@@ -16,54 +15,52 @@ export class Notion {
 
   private getParticipantTemplate(data: Participant) {
     return {
-      properties: {
-        Nome: {
-          title: [
-            {
-              text: {
-                content: data.name,
-              },
+      Nome: {
+        title: [
+          {
+            text: {
+              content: data.name,
             },
-          ],
-        },
-        Email: {
-          rich_text: [
-            {
-              text: {
-                content: data.email,
-              },
+          },
+        ],
+      },
+      Email: {
+        rich_text: [
+          {
+            text: {
+              content: data.email,
             },
-          ],
-        },
-        Id: {
-          rich_text: [
-            {
-              text: {
-                content: data.id,
-              },
+          },
+        ],
+      },
+      Id: {
+        rich_text: [
+          {
+            text: {
+              content: data.id,
             },
-          ],
-        },
-        'Nickname do Discord': {
-          rich_text: [
-            {
-              text: {
-                content: data.nickname,
-              },
+          },
+        ],
+      },
+      'Nickname do Discord': {
+        rich_text: [
+          {
+            text: {
+              content: data.nickname,
             },
-          ],
-        },
+          },
+        ],
       },
     }
   }
 
   private getPresenceTemplate(data: any) {
     return {
-      Id: {
+      Codigo: {
         title: [
           {
             text: {
-              content: String(data.position),
+              content: data.tag,
             },
           },
         ],
@@ -91,7 +88,7 @@ export class Notion {
 
     const participant = this.getParticipantTemplate(participantData);
 
-    return await notionService.createPage(process.env.NOTION_DATABASE_ID, participant.properties);
+    return await notionService.createPage(process.env.NOTION_DATABASE_ID, participant);
   }
 
   private async findParticipant(participantId: string) {
@@ -101,30 +98,45 @@ export class Notion {
 
     // TODO: Deal with participant not found 
 
-
     return participant[0];
   }
 
-  //TODO: Refactor this method
   async confirmPresence(talkId: string, participantId: string) {
     const participant = await this.findParticipant(participantId);
 
     const talkResponse: any = await notionService.getPage(talkId);
 
     const presenceListId = talkResponse.properties.IdListaDePresenca.rich_text[0].plain_text;
+    const talkTag = talkResponse.properties.Codigo.rich_text[0].plain_text;
 
-    const presenceListResponse: any = await notionService.queryDatabase(presenceListId);
-
-    //TODO: Deal with presence list not found
-
-    participant.position = presenceListResponse.results.length + 1;
-
-    const presence = this.getPresenceTemplate(participant);
+    const presence = this.getPresenceTemplate({ ...participant, tag: talkTag });
 
     return await notionService.createPage(presenceListId, presence);
   }
 
+  async getTalkData(talkId: string) {
+    const talkPage = await notionService.getPage(talkId);
 
+    const title = talkPage.properties.Name.title[0].plain_text;
+    const dateString = talkPage.properties.Data.date.start;
+    const date = new Date(dateString);
+    const presenceListId = talkPage.properties.IdListaDePresenca.rich_text[0].plain_text;
+
+    let speakers: string[] = talkPage.properties['Palestrante(s)'].relation.map(async (speaker: any) => {
+      const speakerPage = await notionService.getPage(speaker.id);
+      const speakerName = speakerPage.properties.Nome.title[0].plain_text;
+      return speakerName;
+    });
+
+    speakers = await Promise.all(speakers);
+    return {
+      notionId: talkId,
+      title,
+      date,
+      speakers,
+      presenceListId,
+    }
+  }
 }
 
 export const notion = new Notion();

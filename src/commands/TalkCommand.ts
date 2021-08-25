@@ -1,21 +1,36 @@
 import { Message } from 'discord.js';
 import { Bot } from '../client';
 import { Talk } from '../models/Talk';
+import { talkManager } from '../models/TalkManager';
 import { RunFunction } from '../interfaces/RunFunction';
 import { SubCommand } from '../interfaces/SubCommand';
+import { notion } from '../models/Notion';
 
 async function createTalk(message: Message, args: string[], client: Bot) {
-  if (args.length < 2) {
-    throw new Error(`Parametros inválidos, certifique-se de mandar \`\`\`${process.env.CMD_PREFIX}palestra --criar nome quantidade_de_salas\`\`\``);
+  if (args.length < 1) {
+    message.reply('digite o ID do Notion referente à palestra a ser cadastrada.');
+    return;
   }
 
-  const name = args[0];
-  const date = new Date();
-  const roomsCount = parseInt(args[1]);
+  const talkId = args[0];
+  const talkData = await notion.getTalkData(talkId);
+  const talk = new Talk(talkData.title, talkData.date, talkData.notionId, talkData.speakers);
 
-  const talk = new Talk(name, date, roomsCount);
+  const { channel } = message;
+  await channel.send(talk.toEmbed());
+  await channel.send('Deseja confirmar o cadastro da palestra acima? (y/n)');
 
-  client.talks.push(talk);
+  const answer = await channel.awaitMessages(m => m.author.id === message.author.id, { max: 1, time: 60000 });
+
+  if (answer.first().content === 'y') {
+    const talkToken = talkManager.addTalk(talk);
+    await channel.send('Cadastro realizado com sucesso! Sempre que for referenciar esta palestra use o token: ' + talkToken);
+  }
+}
+
+async function startTalk(message: Message, args: string[], client: Bot) {
+
+  const talk = talkManager.getNextTalk();
 
   await talk.createChannels(message);
 }
@@ -38,8 +53,13 @@ export const name: string = 'palestra';
 
 export const subcommands: SubCommand[] = [
   {
-    name: '--criar',
-    value: 'criar',
+    name: '--cadastrar',
+    value: 'cadastrar',
     run: createTalk,
+  },
+  {
+    name: '--iniciar',
+    value: 'iniciar',
+    run: startTalk,
   }
 ]

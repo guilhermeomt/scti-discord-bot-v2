@@ -2,5 +2,5 @@
     "watch": ["src"],
     "ext": ".ts,.js",
     "ignore": [],
-    "exec": "ts-node-dev ./src/index.ts"
+    "exec": "ts-node-dev --icu-data-dir=node_modules/full-icu ./src/index.ts"
   }
