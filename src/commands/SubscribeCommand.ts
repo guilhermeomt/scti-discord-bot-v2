@@ -12,13 +12,13 @@ async function getParticipantData(message: Message) {
     const welcomeMessage = `Olá! Bem-vindo a SCTI 2021! Vamos realizar o seu cadastro?\nPor favor, me informe seu nome completo. Atenção: o nome que você digitar será utilizado para a emissão do certificado. Você poderá alterar depois ao entrar em contato com algum administrador.`
     await dmChannel.send(welcomeMessage);
 
-    let answer = await dmChannel.awaitMessages(msg => msg.author.id === user.id, { max: 1, time: 30000 });
+    let answer = await dmChannel.awaitMessages({ max: 1, time: 30000 })
 
     const name = answer.first().content;
 
     await dmChannel.send(`Agora digite seu email, por favor.`);
 
-    answer = await dmChannel.awaitMessages(msg => msg.author.id === user.id, { max: 1, time: 30000 });
+    answer = await dmChannel.awaitMessages({ max: 1, time: 30000 });
 
     const email = answer.first().content;
 
@@ -39,7 +39,7 @@ async function getParticipantData(message: Message) {
 }
 
 export const run: RunFunction = async (client, message: Message, args: string[]) => {
-  if (message.channel.type === 'dm') {
+  if (message.channel.type === 'DM') {
     try {
       const participant = await getParticipantData(message);
 

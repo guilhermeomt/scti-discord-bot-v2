@@ -17,10 +17,10 @@ async function createTalk(message: Message, args: string[], client: Bot) {
   const talk = new Talk(talkData.title, talkData.date, talkData.notionId, talkData.speakers);
 
   const { channel } = message;
-  await channel.send(talk.toEmbed());
+  await channel.send({ embeds: [talk.toEmbed()] });
   await channel.send('Deseja confirmar o cadastro da palestra acima? (y/n)');
 
-  const answer = await channel.awaitMessages(m => m.author.id === message.author.id, { max: 1, time: 60000 });
+  const answer = await channel.awaitMessages({ max: 1, time: 60000 });
 
   if (answer.first().content === 'y') {
     const talkToken = talkManager.addTalk(talk);

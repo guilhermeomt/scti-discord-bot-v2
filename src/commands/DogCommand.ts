@@ -6,7 +6,7 @@ export const run: RunFunction = async (client, message: Message, args: string[])
   const { channel } = message;
   channel.send('Foto de um cachorro a caminho...');
   const res = await axios.get(' https://dog.ceo/api/breeds/image/random');
-  channel.send('Aqui está!', { files: [res.data.message] });
+  channel.send('Aqui está!');
 };
 
 export const name: string = 'cachorro';

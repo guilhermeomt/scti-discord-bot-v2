@@ -22,15 +22,11 @@ export class Talk {
       let roomName = `Sala ${i}: ${this.title}`;
       const channel = await message.guild.channels
         .create(roomName, {
-          type: 'voice',
+          type: 'GUILD_VOICE',
           parent: process.env.TALK_CATEGORY_ID,
         })
 
       this.roomsChannelId.push(channel.id);
-
-      await channel.createOverwrite(process.env.PARTICIPANT_ROLE_ID, {
-        SPEAK: false,
-      });
     }
   }
 
@@ -39,6 +35,5 @@ export class Talk {
       .setTitle(this.title)
       .addField('Data/Horário', formatDate(this.date))
       .addField('Palestrante(s)', this.speakers.join('\n'))
-      .setColor(this.displayColor)
   }
 }

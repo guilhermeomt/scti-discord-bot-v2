@@ -4,8 +4,8 @@ import { talkManager } from '../models/TalkManager';
 import { notion } from '../models/Notion';
 
 export const run: RunFunction = async (client, oldState: VoiceState, newState: VoiceState) => {
-  const oldUserChannel = oldState.channelID;
-  const newUserChannel = newState.channelID;
+  const oldUserChannel = oldState.channelId;
+  const newUserChannel = newState.channelId;
 
   const talk = talkManager.findTalkByRoomsChannelId(newUserChannel);
 

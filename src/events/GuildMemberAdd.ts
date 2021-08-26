@@ -4,7 +4,7 @@ import { RunFunction } from '../interfaces/RunFunction';
 export const run: RunFunction = async (client, member: GuildMember) => {
   const invites: Collection<string, Invite> = client.invites;
 
-  const guildInvites = await member.guild.fetchInvites();
+  const guildInvites = await member.guild.invites.fetch();
 
   const invite = guildInvites.find(
     (inv) => invites?.get(inv.code)?.uses < inv.uses
