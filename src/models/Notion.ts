@@ -114,29 +114,36 @@ export class Notion {
     return await notionService.createPage(presenceListId, presence);
   }
 
-  async getTalkData(talkId: string) {
-    const talkPage = await notionService.getPage(talkId);
+  async getEventData(eventId: string) {
+    const eventPage = await notionService.getPage(eventId);
 
-    const title = talkPage.properties.Name.title[0].plain_text;
-    const dateString = talkPage.properties.Data.date.start;
+    const title = eventPage.properties.Name.title[0].plain_text;
+    const type = eventPage.properties.Tipo.select.name === 'Palestra' ? '1' : '0';
+    const dateString = eventPage.properties.Data.date.start;
     const date = new Date(dateString);
-    const presenceListId = talkPage.properties.IdListaDePresenca.rich_text[0].plain_text;
+    const code = eventPage.properties.Codigo.rich_text[0].plain_text;
+    const presenceListId = eventPage.properties.IdListaDePresenca.rich_text[0].plain_text;
 
-    let speakers: string[] = talkPage.properties['Palestrante(s)'].relation.map(async (speaker: any) => {
+    let speakers: string[] = eventPage.properties['Palestrante(s)'].relation.map(async (speaker: any) => {
       const speakerPage = await notionService.getPage(speaker.id);
       const speakerName = speakerPage.properties.Nome.title[0].plain_text;
       return speakerName;
     });
 
     speakers = await Promise.all(speakers);
-    return {
-      notionId: talkId,
+    const event = {
+      notionId: eventId,
+      code,
+      type,
       title,
       date,
       speakers,
       presenceListId,
     }
+
+    return event;
   }
+
 }
 
 export const notion = new Notion();

@@ -1,7 +1,7 @@
 import { Message } from 'discord.js';
 import { Bot } from '../client';
 import { Talk } from '../models/Talk';
-import { talkManager } from '../models/TalkManager';
+import { eventManager } from '../models/EventManager';
 import { RunFunction } from '../interfaces/RunFunction';
 import { SubCommand } from '../interfaces/SubCommand';
 import { notion } from '../models/Notion';
@@ -13,24 +13,24 @@ async function createTalk(message: Message, args: string[], client: Bot) {
   }
 
   const talkId = args[0];
-  const talkData = await notion.getTalkData(talkId);
-  const talk = new Talk(talkData.title, talkData.date, talkData.notionId, talkData.speakers);
+  const talkData = await notion.getEventData(talkId);
+  const talk = new Talk(talkData);
 
   const { channel } = message;
-  await channel.send({ embeds: [talk.toEmbed()] });
+  await channel.send({ embeds: [talk.toMessageEmbed()] });
   await channel.send('Deseja confirmar o cadastro da palestra acima? (y/n)');
 
   const answer = await channel.awaitMessages({ max: 1, time: 60000 });
 
   if (answer.first().content === 'y') {
-    const talkToken = talkManager.addTalk(talk);
+    const talkToken = eventManager.addEvent(talk);
     await channel.send('Cadastro realizado com sucesso! Sempre que for referenciar esta palestra use o token: ' + talkToken);
   }
 }
 
 async function startTalk(message: Message, args: string[], client: Bot) {
 
-  const talk = talkManager.getNextTalk();
+  const talk = eventManager.getNextTalk();
 
   await talk.createChannels(message);
 }

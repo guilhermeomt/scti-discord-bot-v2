@@ -2,10 +2,10 @@ import { Message, MessageEmbed } from "discord.js";
 import { formatDate } from "../utils/formatDate";
 import { Event, NewEventData } from "./Event";
 
-export class Talk extends Event {
+export class Workshop extends Event {
   constructor(eventData: NewEventData) {
     super(eventData);
-    this.displayColor = 'GREEN';
+    this.displayColor = 'RED';
   }
 
   async createChannels(message: Message) {
@@ -24,9 +24,9 @@ export class Talk extends Event {
   toMessageEmbed(): MessageEmbed {
     return new MessageEmbed()
       .setTitle(this.title)
-      .addField('Tipo de Evento', 'Palestra')
+      .addField('Tipo de Evento', 'Workshop')
       .addField('Data/Horário', formatDate(this.date))
-      .addField('Palestrante(s)', this.speakers.join('\n'))
+      .addField('Instrutor(es)', this.speakers.join('\n'))
       .setColor(this.displayColor);
   }
 }

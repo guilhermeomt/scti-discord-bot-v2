@@ -1,21 +1,21 @@
-import { Talk } from "./Talk";
 import { db } from "../services/Database";
 import { Collection } from "discord.js";
+import { Event } from "./Event";
 
-export class TalkManager {
-  talks = new Collection<string, Talk>();
+export class EventManager {
+  events = new Collection<string, Event>();
 
   constructor() {
   }
 
-  addTalk(talk: Talk) {
-    const token = String(this.talks.size + 1);
-    this.talks.set(token, talk);
+  addEvent(event: Event) {
+    const token = String(this.events.size + 1);
+    this.events.set(token, event);
     return token;
   }
 
-  getNextTalk(): Talk {
-    return this.talks.first();
+  getNextTalk(): Event {
+    return this.events.first();
   }
 
   isPresenceConfirmed(userId: string): boolean {
@@ -30,8 +30,8 @@ export class TalkManager {
     return false;
   }
 
-  findTalkByRoomsChannelId(id: string): Talk {
-    return this.talks.find((value: Talk) => {
+  findTalkByRoomsChannelId(id: string): Event {
+    return this.events.find((value: Event) => {
       const roomId = value.roomsChannelId.find((roomId: string) => {
         return roomId === id;
       });
@@ -40,4 +40,4 @@ export class TalkManager {
   }
 }
 
-export const talkManager = new TalkManager();
+export const eventManager = new EventManager();

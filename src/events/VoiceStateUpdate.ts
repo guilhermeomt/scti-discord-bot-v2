@@ -1,13 +1,13 @@
 import { VoiceState } from 'discord.js';
 import { RunFunction } from '../interfaces/RunFunction';
-import { talkManager } from '../models/TalkManager';
+import { eventManager } from '../models/EventManager';
 import { notion } from '../models/Notion';
 
 export const run: RunFunction = async (client, oldState: VoiceState, newState: VoiceState) => {
   const oldUserChannel = oldState.channelId;
   const newUserChannel = newState.channelId;
 
-  const talk = talkManager.findTalkByRoomsChannelId(newUserChannel);
+  const talk = eventManager.findTalkByRoomsChannelId(newUserChannel);
 
   if (!talk) return;
 
@@ -21,7 +21,7 @@ export const run: RunFunction = async (client, oldState: VoiceState, newState: V
     const isParticipant = newState.member.roles.cache.some((role) => role.id === process.env.PARTICIPANT_ROLE_ID);
 
     // if (!isParticipant
-    //   || talkManager.isPresenceConfirmed(user.id)) {
+    //   || eventManager.isPresenceConfirmed(user.id)) {
     //   return;
     // }
 

@@ -1,11 +1,16 @@
 import { RunFunction } from '../interfaces/RunFunction';
-import { CommandInteraction } from 'discord.js'
+import { Collection, CommandInteraction } from 'discord.js'
 import { Bot } from '../client';
 
-export const run: RunFunction = async (client: Bot, interaction: CommandInteraction) => {
-  if (interaction.isButton()) {
+const buffer: Collection<string, any> = new Collection();
 
-    await interaction.update({ components: [], content: 'Confirmado!' });
+export const run: RunFunction = async (client: Bot, interaction: CommandInteraction) => {
+  if (interaction.isMessageComponent()) {
+    const component = client.components.find(c => c.component.customId === interaction.customId)
+
+    if (component) {
+      component.execute(interaction, buffer);
+    }
   }
 
   if (!interaction.isCommand()) return;
@@ -15,10 +20,10 @@ export const run: RunFunction = async (client: Bot, interaction: CommandInteract
   if (!command) return;
 
   try {
-    await command.execute(interaction);
+    await command.execute(interaction, buffer);
   } catch (error) {
     console.error(error);
-    await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+    await interaction.reply({ content: 'Opa! Ocorreu um erro ao executar esse comando...', ephemeral: true });
   }
 };
 
