@@ -1,10 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { Collection, CommandInteraction, MessageActionRow } from 'discord.js';
 import { notion } from '../models/Notion';
-import { Talk } from '../models/Talk';
-import { Workshop } from '../models/Workshop';
-import { Event, NewEventData } from '../models/Event';
-import { eventManager } from '../models/EventManager';
+import { Event, EventStatus } from '../models/Event';
 import { component as confirmButton } from '../components/CreateEventButton';
 import { component as discardButton } from '../components/DiscardEventButton';
 import { component as selectMenu } from '../components/StartEventSelectMenu';
@@ -15,30 +12,38 @@ export const command = new SlashCommandBuilder()
   .setDescription('Gerencia os eventos da SCTI')
   .addSubcommand(subcommand =>
     subcommand
-      .setName('criar')
-      .setDescription('Cria um evento')
+      .setName('cadastrar')
+      .setDescription('Cadastra um novo evento')
       .addStringOption(option =>
         option
           .setName('notion_id')
-          .setDescription('Notion ID do evento')
+          .setDescription('Notion ID do evento ou use * encontrar eventos automaticamente')
           .setRequired(true)
       ),
-
   )
   .addSubcommand(subcommand =>
     subcommand
       .setName('iniciar')
       .setDescription('Inicia um evento (palestra ou workshop)')
+      .addChannelOption(option =>
+        option
+          .setName('canal_categoria')
+          .setDescription('Selecione a categoria a qual será criada as salas do evento')
+      )
   );
+
 
 export const execute = async function (interaction: CommandInteraction, buffer: Collection<string, any>) {
   await interaction.deferReply();
-  switch (interaction.options.getSubcommand()) {
-    case 'criar':
+
+  const subcommand = interaction.options.getSubcommand();
+
+  switch (subcommand) {
+    case 'cadastrar':
       createEvent(interaction, buffer);
       break;
     case 'iniciar':
-      startEvent(interaction);
+      startEvent(interaction, buffer);
       break;
     default:
       await interaction.editReply('Comando não encontrado');
@@ -48,50 +53,60 @@ export const execute = async function (interaction: CommandInteraction, buffer: 
 async function createEvent(interaction: CommandInteraction, buffer: Collection<string, any>) {
   const notionId = interaction.options.getString('notion_id');
 
-  const eventData: NewEventData = await notion.getEventData(notionId);
-  let event: Event = null;
+  try {
+    const existingEvent = await Event.findByPk(notionId, { attributes: ['notionId'] })
 
-  if (eventData.type === '1') {
-    event = new Talk(eventData);
-  } else if (eventData.type === '0') {
-    event = new Workshop(eventData);
-  } else {
-    await interaction.editReply('Opa, ocorreu um erro ao criar o evento. Verefique se a página no Notion está preenchida corretamente.');
-    return;
+    if (existingEvent) {
+      await interaction.editReply('Já existe um evento com este ID.');
+      return;
+    }
+
+    const eventData = await notion.getEventData(notionId);
+
+    const event: Event = Event.build(eventData);
+
+    const row = new MessageActionRow();
+    row.addComponents([confirmButton, discardButton]);
+    buffer.set(confirmButton.customId, event);
+
+    await interaction.editReply({
+      content: `${event.getTalkType()} foi criado(a) com sucesso! Deseja confirmar o registro?`,
+      embeds: [event.toMessageEmbed()],
+      components: [row],
+    });
+  } catch (err) {
+    await interaction.editReply('Desculpa! Não foi possível criar o evento...');
   }
-
-  buffer.set(confirmButton.customId, event);
-
-  const row = new MessageActionRow();
-  row.addComponents([confirmButton, discardButton]);
-
-  const eventTypeString = eventData.type === '1' ? 'Palestra' : 'Workshop';
-  await interaction.editReply({
-    content: `${eventTypeString} foi criado(a) com sucesso! Deseja confirmar o registro?`,
-    embeds: [event.toMessageEmbed()],
-    components: [row],
-  });
 }
 
-async function startEvent(interaction: CommandInteraction) {
-
+async function startEvent(interaction: CommandInteraction, buffer: Collection<string, any>) {
   const row = new MessageActionRow();
 
-  const eventOptions = eventManager.events.mapValues(event => {
-    return {
-      label: event.title,
-      description: formatDate(event.date),
-      value: event.notionId,
-    }
-  });
+  const categoryChannel = interaction.options.getChannel('canal_categoria');
 
-  if (eventOptions.size === 0) {
-    await interaction.editReply('Nenhum evento foi criado ainda!');
-    return;
+  if (categoryChannel) {
+    buffer.set(selectMenu.customId, categoryChannel.id);
   }
 
-  selectMenu.addOptions([...eventOptions.values()]);
+  try {
+    const events = await Event.findAll({ where: { status: EventStatus.NOT_STARTED } });
 
-  row.addComponents([selectMenu]);
-  await interaction.editReply({ content: 'Selecione o evento:', components: [row] });
+    const eventOptions = events.map(event => {
+      return {
+        label: event.title,
+        description: formatDate(new Date(event.date)),
+        value: event.notionId,
+      }
+    });
+
+    if (eventOptions.length === 0)
+      return await interaction.editReply('Nenhum evento foi criado ainda!');
+
+    selectMenu.addOptions(eventOptions);
+    row.addComponents([selectMenu]);
+
+    await interaction.editReply({ content: 'Selecione o evento:', components: [row] });
+  } catch (err) {
+    await interaction.editReply('Opa... ocorreu um erro!');
+  }
 }

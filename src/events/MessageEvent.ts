@@ -3,8 +3,8 @@ import { Command } from '../interfaces/Command';
 import { RunFunction } from '../interfaces/RunFunction';
 
 export const run: RunFunction = async (client, message: Message) => {
-  if (message.author.bot) return;
   const prefix = process.env.CMD_PREFIX;
+  if (message.author.bot || !message.content.startsWith(prefix)) return;
 
   const args = message.content
     .slice(prefix?.length)
@@ -24,4 +24,4 @@ export const run: RunFunction = async (client, message: Message) => {
     .catch((reason: any) => message.channel.send(`Erro: ${reason}!`));
 };
 
-export const name: string = 'message';
+export const name: string = 'messageCreate';

@@ -1,4 +1,5 @@
-import { Collection, MessageSelectMenu, SelectMenuInteraction } from "discord.js";
+import { Collection, Message, MessageSelectMenu, SelectMenuInteraction } from "discord.js";
+import { Event } from "../models/Event";
 import { eventManager } from "../models/EventManager";
 
 export const component = new MessageSelectMenu()
@@ -6,16 +7,21 @@ export const component = new MessageSelectMenu()
   .setPlaceholder('Nenhuma opção selecionada')
 
 export async function execute(interaction: SelectMenuInteraction, buffer: Collection<string, any>) {
+  component.spliceOptions(0, component.options.length);
   const eventNotionId = interaction.values[0];
 
-  const event = eventManager.events.find(event => event.notionId === eventNotionId);
+  try {
+    const event = await Event.findOne({ where: { notionId: eventNotionId } });
+    if (!event)
+      return await interaction.update({ content: "Algo deu errado...", components: [] });
 
-  if (!event) {
+    const categoryChannelId = buffer.get(interaction.customId);
+    await interaction.update({ content: "Iniciando...", components: [] });
+
+    await event.start(interaction.message as Message, categoryChannelId);
+    eventManager.addEvent(event);
+  } catch (err) {
     await interaction.update({ content: "Algo deu errado...", components: [] });
-    return;
+    console.log(err);
   }
-
-  await interaction.update({ content: "Iniciado...", components: [] });
-  //event.createChannels();
-
 }

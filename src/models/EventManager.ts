@@ -1,37 +1,18 @@
-import { db } from "../services/Database";
-import { Collection } from "discord.js";
 import { Event } from "./Event";
 
 export class EventManager {
-  events = new Collection<string, Event>();
+  private ongoingEvents: Array<Event>;
 
   constructor() {
+    this.ongoingEvents = new Array();
   }
 
-  addEvent(event: Event) {
-    const token = String(this.events.size + 1);
-    this.events.set(token, event);
-    return token;
+  addEvent(event: Event): void {
+    this.ongoingEvents.push(event);
   }
 
-  getNextTalk(): Event {
-    return this.events.first();
-  }
-
-  isPresenceConfirmed(userId: string): boolean {
-    db.serialize(() => {
-      db.each(`SELECT id FROM users WHERE user_id = ?`, [userId], (err, row) => {
-        if (row?.id) {
-          return true;
-        }
-      });
-    });
-
-    return false;
-  }
-
-  findTalkByRoomsChannelId(id: string): Event {
-    return this.events.find((value: Event) => {
+  findEventByRoomsChannelId(id: string): Event {
+    return this.ongoingEvents.find((value: Event) => {
       const roomId = value.roomsChannelId.find((roomId: string) => {
         return roomId === id;
       });

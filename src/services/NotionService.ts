@@ -1,66 +1,61 @@
-import { Client } from "@notionhq/client";
-import { InputPropertyValueMap } from "@notionhq/client/build/src/api-endpoints";
-import { notionApi as api } from "./Api";
+import axios, { AxiosInstance } from 'axios';
 
 
 export class NotionService {
-  client: Client = new Client({
-    auth: process.env.NOTION_AUTH_TOKEN,
-  });
+  private readonly api: AxiosInstance;
 
   constructor() {
-  }
-
-  getDatabase(databaseId: string): Promise<any> {
-    return this.client.databases.retrieve({
-      database_id: databaseId
+    this.api = axios.create({
+      baseURL:
+        'https://api.notion.com/v1/',
+      headers: {
+        'Content-Type': 'application/json',
+        'Notion-Version': '2021-08-16',
+        Authorization: 'Bearer ' + process.env.NOTION_AUTH_TOKEN,
+      }
     });
   }
 
-  queryDatabase(databaseId: string, startCursor?: string): Promise<any> {
-    return this.client.databases.query({
-      database_id: databaseId,
-      start_cursor: startCursor ? startCursor : undefined,
-    });
+  async getDatabase(databaseId: string): Promise<any> {
+    return new Promise(resolve => Error('Not implemented'))
   }
 
-  updateDatabase(databaseId: string, data: object): Promise<any> {
-    return api.patch(`/database/${databaseId}`, data);
+  async queryDatabase(databaseId: string, startCursor?: string): Promise<any> {
+    return new Promise(resolve => Error('Not implemented'))
   }
 
-  getPage(pageId: string): Promise<any> {
-    return this.client.pages.retrieve({
-      page_id: pageId
-    });
+  async updateDatabase(databaseId: string, data: object): Promise<any> {
+    return new Promise(resolve => Error('Not implemented'))
   }
 
-  getBlock(elementId: string): Promise<any> {
-    return this.client.blocks.children.list({
-      block_id: elementId,
-    });
+  async getPage(pageId: string): Promise<any> {
+    try {
+      const res = await this.api.get(`pages/${pageId}`)
+      return res.data;
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  createPage(parentId: string, data: object): Promise<any> {
-    return this.client.pages.create({
-      parent: {
-        database_id: parentId,
-      },
-      properties: {
-        ...data,
-      },
-    })
+  async getBlock(elementId: string): Promise<any> {
+    return new Promise(resolve => Error('Not implemented'))
   }
 
-  updatePage(pageId: string, data: InputPropertyValueMap): Promise<any> {
+  async createPage(data: object): Promise<any> {
+    try {
+      const res = await this.api.post('pages/', data)
+      return res.data;
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
-    return this.client.pages.update({
-      page_id: pageId,
-      properties: {
-        ...data,
-      },
-      archived: false,
-    })
+  async updatePage(pageId: string, data: object): Promise<any> {
+    try {
+      const res = await this.api.patch(`pages/${pageId}`, data)
+      return res.data;
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
-
-export const notionService = new NotionService();

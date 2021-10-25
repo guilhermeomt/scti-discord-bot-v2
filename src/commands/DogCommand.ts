@@ -4,9 +4,9 @@ import { RunFunction } from '../interfaces/RunFunction';
 
 export const run: RunFunction = async (client, message: Message, args: string[]) => {
   const { channel } = message;
-  channel.send('Foto de um cachorro a caminho...');
+  await channel.send('Foto de um cachorro a caminho...');
   const res = await axios.get(' https://dog.ceo/api/breeds/image/random');
-  channel.send('Aqui está!');
+  await channel.send({ content: 'Aqui está!', files: [res.data.message] });
 };
 
 export const name: string = 'cachorro';
